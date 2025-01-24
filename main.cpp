@@ -34,7 +34,7 @@ void drawScene(const Scene& scene, const Vector& origin, unsigned char* buffer) 
 		for (int j = 0; j < WIDTH; j++) {
 			Vector u(j - static_cast<double>(WIDTH) / 2, -i + static_cast<double>(HEIGHT) / 2, -HEIGHT / (2 * tan(ALPHA / 2)));
 			Ray ray(origin, u.normalized());
-			Vector color = scene.getColor(ray);
+			Vector color = scene.getColor(ray, 20);
 			buffer[(i * WIDTH + j) * 3 + 0] = adjustColor(color[0]);
 			buffer[(i * WIDTH + j) * 3 + 1] = adjustColor(color[1]);
 			buffer[(i * WIDTH + j) * 3 + 2] = adjustColor(color[2]);
@@ -49,7 +49,7 @@ void drawScene(const Scene& scene, const Vector& origin, unsigned char* buffer) 
 int main() {
 	Vector origin(0, 0, 55);
 	Scene scene(Vector(10, 20, 40), 2e10);
-	scene.addSphere(Sphere(Vector(0, -5, 0), 5, Vector(.5, .2, .9)));
+	scene.addSphere(Sphere(Vector(0, -10, 0), 5, Vector(.5, .2, .9)).transparent(1.5));
 
 	scene.addSphere(Sphere(Vector(0, -10020, 0), 10000, Vector(.5, .5, .5)));
 	scene.addSphere(Sphere(Vector(0, +10040, 0), 10000, Vector(.5, .5, .5)));

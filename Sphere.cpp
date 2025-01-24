@@ -26,3 +26,14 @@ Sphere::IntersectResult Sphere::intersect(const Ray& ray) const {
 	return {impact, normal.normalized(), t, true};
 }
 
+Sphere& Sphere::mirror() {
+	this->mirrors = true;
+	return *this;
+}
+
+Sphere& Sphere::transparent(double opticalIndex) {
+	this->isTransparent = true;
+	this->opticalIndex = opticalIndex;
+	return *this;
+}
+
