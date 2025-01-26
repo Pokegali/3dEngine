@@ -15,6 +15,7 @@ public:
 	double operator[](int i) const;
 
 	Vector& operator+=(const Vector& v);
+	Vector& operator/=(double);
 
 	[[nodiscard]] double norm2() const;
 	[[nodiscard]] double dot(const Vector& a) const;
@@ -22,6 +23,7 @@ public:
 	Vector operator+(const Vector&) const;
 	Vector operator-(const Vector&) const;
 	Vector operator*(double) const;
+	Vector operator/(double) const;
 
 	Vector normalized();
 

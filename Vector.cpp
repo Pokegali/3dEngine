@@ -15,9 +15,12 @@ double& Vector::operator[](int i) { return coord[i]; }
 double Vector::operator[](int i) const { return coord[i]; }
 
 Vector& Vector::operator+=(const Vector& v) {
-	coord[0] += v[0];
-	coord[1] += v[1];
-	coord[2] += v[2];
+	*this = *this + v;
+	return *this;
+}
+
+Vector& Vector::operator/=(double x) {
+	*this = *this / x;
 	return *this;
 }
 
@@ -39,6 +42,10 @@ Vector Vector::operator-(const Vector& a) const {
 
 Vector Vector::operator*(double b) const {
 	return {coord[0] * b, coord[1] * b, coord[2] * b};
+}
+
+Vector Vector::operator/(double b) const {
+	return {coord[0] / b, coord[1] / b, coord[2] / b};
 }
 
 Vector Vector::normalized() {

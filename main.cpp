@@ -3,15 +3,11 @@
 #include <chrono>
 #include <iostream>
 
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "stb_image_write.h"
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
-
-#include "Ray.h"
+#include "stb_all.h"
 #include "Scene.h"
 #include "Sphere.h"
 #include "Vector.h"
+#include "ProgressBar.h"
 
 
 constexpr double ALPHA = 60 * std::numbers::pi / 180;
@@ -28,22 +24,23 @@ void drawScene(const Scene& scene, const Vector& origin, unsigned char* buffer) 
 	using std::chrono_literals::operator ""ns;
 	long pixelTime = 0;
 	auto startTime = get_clock();
-#pragma omp parallel for default(none) shared(scene, origin, buffer, pixelTime)
+	ProgressBar progressBar(HEIGHT * WIDTH);
+#pragma omp parallel for default(none) schedule(static) shared(scene, origin, buffer, pixelTime, progressBar)
 	for (int i = 0; i < HEIGHT; i++) {
 		auto lineStartTime = get_clock();
 		for (int j = 0; j < WIDTH; j++) {
-			Vector u(j - static_cast<double>(WIDTH) / 2, -i + static_cast<double>(HEIGHT) / 2, -HEIGHT / (2 * tan(ALPHA / 2)));
-			Ray ray(origin, u.normalized());
-			Vector color = scene.getColor(ray, 20);
+			Vector pixel(j - static_cast<double>(WIDTH) / 2, -i + static_cast<double>(HEIGHT) / 2, -HEIGHT / (2 * tan(ALPHA / 2)));
+			Vector color = scene.getColor(origin, pixel);
 			buffer[(i * WIDTH + j) * 3 + 0] = adjustColor(color[0]);
 			buffer[(i * WIDTH + j) * 3 + 1] = adjustColor(color[1]);
 			buffer[(i * WIDTH + j) * 3 + 2] = adjustColor(color[2]);
+			progressBar.update(i * WIDTH + j);
 		}
 		pixelTime += (get_clock() - lineStartTime) / 1ns;
 	}
 	pixelTime /= HEIGHT * WIDTH;
 	long totalTime = (get_clock() - startTime) / 1ns;
-	std::cout << std::format("Temps moyen pour un pixel: {:.2f}µs (Total {:.0f}ms)", static_cast<double>(pixelTime) / 1000, static_cast<double>(totalTime) / 1e6) << std::endl;
+	std::cout << std::endl << std::format("Temps moyen pour un pixel: {:.2f}µs (Total {:.1f}s)", static_cast<double>(pixelTime) / 1000, static_cast<double>(totalTime) / 1e9) << std::endl;
 }
 
 int main() {
@@ -64,3 +61,5 @@ int main() {
 
 	return 0;
 }
+
+#pragma GCC diagnostic ignored "-Wstrict-overflow"
