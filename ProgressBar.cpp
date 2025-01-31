@@ -36,7 +36,7 @@ void Timer::reset() {
 	running = false;
 }
 
-ProgressBar::ProgressBar(int totalWork): totalWork(totalWork), callDiff(totalWork / 200) {
+ProgressBar::ProgressBar(int totalWork): totalWork(totalWork), callDiff(totalWork / 400) {
 	clearConsoleLine();
 	timer.start();
 }
@@ -49,19 +49,20 @@ void ProgressBar::update(int workDone) {
 #endif
 	if (omp_get_thread_num() != 0) { return; }
 	this->workDone = workDone;
-	if (workDone < nextUpdate) { return; }
-	nextUpdate += callDiff;
-	int percent = workDone * omp_get_num_threads() * 100 / totalWork;
+	double currentTime = timer.lap();
+	if (currentTime - lastUpdateTime < .1 && workDone != totalWork) { return; }
+	lastUpdateTime = currentTime;
+	double percent = static_cast<double>(workDone) * omp_get_num_threads() * 100 / totalWork;
+	auto intPercent = static_cast<unsigned int>(percent);
 	if (percent > 100) { percent = 100; }
-	if (percent == oldPercent) { return; }
-	oldPercent = percent;
 	std::cout << "\r\033[2K["
-			  << std::string(percent / 2, '=') << std::string(50 - percent / 2, ' ')
+			  << std::string(intPercent / 2, '=') << std::string(50 - intPercent / 2, ' ')
 			  << "] ("
 			  << percent << "% - "
-			  << std::fixed << std::setprecision(1) << timer.lap() / percent * (100-percent)
+			  << std::fixed << std::setprecision(1) << currentTime / percent * (100-percent)
 			  << "s - "
-			  << omp_get_num_threads() <<  " threads)" << std::flush;
+			  << omp_get_num_threads() <<  " threads - "
+	          << std::setprecision(0) << workDone / currentTime << " it/s)" << std::flush;
 }
 
 ProgressBar& ProgressBar::operator++() {

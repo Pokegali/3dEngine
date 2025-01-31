@@ -38,10 +38,9 @@ public:
 
 private:
 	int totalWork;
-	int nextUpdate = 0;
 	int callDiff;
+	double lastUpdateTime = 0;
 	int workDone = 0;
-	int oldPercent = 0;
 	Timer timer;
 
 	static void clearConsoleLine() ;

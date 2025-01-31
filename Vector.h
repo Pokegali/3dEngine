@@ -18,14 +18,16 @@ public:
 	Vector& operator/=(double);
 
 	[[nodiscard]] double norm2() const;
-	[[nodiscard]] double dot(const Vector& a) const;
+	[[nodiscard]] double dot(const Vector&) const;
+	[[nodiscard]] Vector cross(const Vector&) const;
+	Vector operator*(const Vector&) const;
 
 	Vector operator+(const Vector&) const;
 	Vector operator-(const Vector&) const;
 	Vector operator*(double) const;
 	Vector operator/(double) const;
 
-	Vector normalized();
+	[[nodiscard]] Vector normalized() const;
 
 private:
 	double coord[3];

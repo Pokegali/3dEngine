@@ -12,7 +12,28 @@ std::pair<double, double> boxMuller(double stdDev) {
 	double u1 = uniform(engines[omp_get_thread_num()]);
 	double u2 = uniform(engines[omp_get_thread_num()]);
 	double r = std::sqrt(-2 * std::log(u1));
-	return {r * std::cos(2 * std::numbers::pi * u2) * stdDev, r * std::sin(2 * std::numbers::pi * u2) * stdDev};
+	return {r * std::cos(2 * M_PI * u2) * stdDev, r * std::sin(2 * M_PI * u2) * stdDev};
+}
+
+Vector cosRandomVector(const Vector& normal) {
+	double r1 = uniform(engines[omp_get_thread_num()]);
+	double r2 = uniform(engines[omp_get_thread_num()]);
+	double sr2 = std::sqrt(1 - r2);
+	Vector direction {
+		std::cos(2 * M_PI * r1) * sr2,
+		std::sin(2 * M_PI * r1) * sr2,
+		std::sqrt(r2)
+	};
+	Vector tangent;
+	if (std::abs(normal[0]) <= std::abs(normal[1]) && std::abs(normal[0]) <= std::abs(normal[2])) {
+		tangent = Vector(0, normal[2], -normal[1]).normalized();
+	} else if (std::abs(normal[1]) <= std::abs(normal[0]) && std::abs(normal[1]) <= std::abs(normal[2])) {
+		tangent = Vector(normal[2], 0, -normal[0]).normalized();
+	} else {
+		tangent = Vector(normal[1], -normal[0], 0).normalized();
+	}
+	Vector tangent2 = normal.cross(tangent).normalized();
+	return direction[2] * normal + direction[0] * tangent + direction[1] * tangent2;
 }
 
 Scene::Scene(const Vector& source_pos, double source_intensity): source_pos(source_pos), source_intensity(source_intensity) {
@@ -46,7 +67,7 @@ Scene::IntersectResult Scene::intersect(const Ray& ray) const {
 
 Vector Scene::getColor(const Ray& ray, int maxBounce) const {
 	IntersectResult intersection = intersect(ray);
-	if (maxBounce < 0 || !intersection.result) { return {100000, 0, 0}; }
+	if (maxBounce < 0 || !intersection.result) { return {0, 0, 0}; }
 	if (intersection.object->isTransparent) { return refractIntersection(ray, intersection, maxBounce); }
 	if (intersection.object->mirrors) { return bounceIntersection(ray, intersection, maxBounce); }
 	Vector travel = source_pos - intersection.impact;
@@ -54,10 +75,11 @@ Vector Scene::getColor(const Ray& ray, int maxBounce) const {
 	Vector lightDirection = travel.normalized();
 	Ray shadowRay(intersection.impact + lightDirection * .001, lightDirection);
 	IntersectResult shadowIntersect = intersect(shadowRay);
-	if (shadowIntersect.result && shadowIntersect.distance * shadowIntersect.distance < distance_2) {
-		return {0, 0, 0};
-	}
-	return source_intensity * std::max(0., intersection.normal.dot(lightDirection)) / (4 * std::numbers::pi * std::numbers::pi * distance_2) * intersection.object->albedo;
+	Vector directContribution = shadowIntersect.result && shadowIntersect.distance * shadowIntersect.distance < distance_2
+		? Vector(0, 0, 0)
+		: source_intensity * std::max(0., intersection.normal.dot(lightDirection)) / (4 * M_PI * M_PI * distance_2) * intersection.object->albedo;
+	Vector indirectContribution = getColor(Ray(intersection.impact + .001 * intersection.normal, cosRandomVector(intersection.normal)), maxBounce - 1) * intersection.object->albedo;
+	return indirectContribution + directContribution;
 }
 
 Vector Scene::getColor(const Vector& origin, const Vector& pixel) const {
@@ -66,7 +88,7 @@ Vector Scene::getColor(const Vector& origin, const Vector& pixel) const {
 		auto [n1, n2] = boxMuller(.5);
 		Vector u = pixel + Vector(.5 + n1, -.5 - n2, 0);
 		Ray ray(origin, u.normalized());
-		color += getColor(ray, 20);
+		color += getColor(ray, 10);
 	}
 	return color / RAYS_PER_PIXEL;
 }

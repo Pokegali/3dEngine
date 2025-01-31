@@ -1,4 +1,3 @@
-// #define _CRT_SECURE_NO_WARNINGS 1
 #include <vector>
 #include <chrono>
 #include <iostream>
@@ -10,7 +9,7 @@
 #include "ProgressBar.h"
 
 
-constexpr double ALPHA = 60 * std::numbers::pi / 180;
+constexpr double ALPHA = 60 * M_PI / 180;
 constexpr int HEIGHT = 512;
 constexpr int WIDTH = 512;
 
@@ -34,7 +33,7 @@ void drawScene(const Scene& scene, const Vector& origin, unsigned char* buffer) 
 			buffer[(i * WIDTH + j) * 3 + 0] = adjustColor(color[0]);
 			buffer[(i * WIDTH + j) * 3 + 1] = adjustColor(color[1]);
 			buffer[(i * WIDTH + j) * 3 + 2] = adjustColor(color[2]);
-			progressBar.update(i * WIDTH + j);
+			progressBar.update(i * WIDTH + j + 1);
 		}
 		pixelTime += (get_clock() - lineStartTime) / 1ns;
 	}
@@ -46,14 +45,14 @@ void drawScene(const Scene& scene, const Vector& origin, unsigned char* buffer) 
 int main() {
 	Vector origin(0, 0, 55);
 	Scene scene(Vector(10, 20, 40), 2e10);
-	scene.addSphere(Sphere(Vector(0, -10, 0), 5, Vector(.5, .2, .9)).transparent(1.5));
+	scene.addSphere(Sphere(Vector(0, -10, 0), 10, Vector(.5, .2, .9)).transparent(1.5));
 
-	scene.addSphere(Sphere(Vector(0, -10020, 0), 10000, Vector(.5, .5, .5)));
-	scene.addSphere(Sphere(Vector(0, +10040, 0), 10000, Vector(.5, .5, .5)));
-	scene.addSphere(Sphere(Vector(-10040, 0, 0), 10000, Vector(.5, .5, .5)));
-	scene.addSphere(Sphere(Vector(+10040, 0, 0), 10000, Vector(.5, .5, .5)));
-	scene.addSphere(Sphere(Vector(0, 0, -10030), 10000, Vector(.5, .5, .5)));
-	scene.addSphere(Sphere(Vector(0, 0, +10070), 10000, Vector(.5, .5, .5)));
+	scene.addSphere(Sphere(Vector(0, -10020, 0), 10000, .7 * Vector(1, 0, 1)));
+	scene.addSphere(Sphere(Vector(0, +10040, 0), 10000, .7 * Vector(0, 0, 1)));
+	scene.addSphere(Sphere(Vector(-10040, 0, 0), 10000, .7 * Vector(1, 0, 0)));
+	scene.addSphere(Sphere(Vector(+10040, 0, 0), 10000, .7 * Vector(1, 1, 0)));
+	scene.addSphere(Sphere(Vector(0, 0, -10030), 10000, .7 * Vector(0, 1, 1)));
+	scene.addSphere(Sphere(Vector(0, 0, +10070), 10000, .7 * Vector(0, 1, 0)));
 
 	unsigned char image[WIDTH * HEIGHT * 3];
 	drawScene(scene, origin, image);

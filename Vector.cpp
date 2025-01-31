@@ -32,6 +32,18 @@ double Vector::dot(const Vector& a) const {
 	return a[0] * coord[0] + a[1] * coord[1] + a[2] * coord[2];
 }
 
+Vector Vector::cross(const Vector& a) const {
+	return {
+		coord[1] * a[2] - coord[2] * a[1],
+		coord[2] * a[0] - coord[0] * a[2],
+		coord[0] * a[1] - coord[1] * a[0]
+	};
+}
+
+Vector Vector::operator*(const Vector& a) const {
+	return {coord[0] * a[0], coord[1] * a[1], coord[2] * a[2]};
+}
+
 Vector Vector::operator+(const Vector& a) const {
 	return {coord[0] + a[0], coord[1] + a[1], coord[2] + a[2]};
 }
@@ -48,7 +60,7 @@ Vector Vector::operator/(double b) const {
 	return {coord[0] / b, coord[1] / b, coord[2] / b};
 }
 
-Vector Vector::normalized() {
+Vector Vector::normalized() const {
 	double norm = std::sqrt(norm2());
 	return {coord[0] / norm, coord[1] / norm, coord[2] / norm};
 }

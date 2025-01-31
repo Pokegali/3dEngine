@@ -10,7 +10,7 @@
 
 #include "Sphere.h"
 
-constexpr int RAYS_PER_PIXEL = 1024;
+constexpr int RAYS_PER_PIXEL = 128;
 
 static std::array<std::default_random_engine, 4> engines;
 static std::uniform_real_distribution<> uniform(0, 1);
