@@ -42,6 +42,7 @@ private:
 	double lastUpdateTime = 0;
 	int workDone = 0;
 	Timer timer;
+	unsigned int size = 50;
 
 	static void clearConsoleLine() ;
 };

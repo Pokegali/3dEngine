@@ -29,7 +29,7 @@ void drawScene(const Scene& scene, const Vector& origin, unsigned char* buffer) 
 		auto lineStartTime = get_clock();
 		for (int j = 0; j < WIDTH; j++) {
 			Vector pixel(j - static_cast<double>(WIDTH) / 2, -i + static_cast<double>(HEIGHT) / 2, -HEIGHT / (2 * tan(ALPHA / 2)));
-			Vector color = scene.getColor(origin, pixel);
+			Vector color = scene.getColor(origin, pixel, 55);
 			buffer[(i * WIDTH + j) * 3 + 0] = adjustColor(color[0]);
 			buffer[(i * WIDTH + j) * 3 + 1] = adjustColor(color[1]);
 			buffer[(i * WIDTH + j) * 3 + 2] = adjustColor(color[2]);
@@ -39,13 +39,14 @@ void drawScene(const Scene& scene, const Vector& origin, unsigned char* buffer) 
 	}
 	pixelTime /= HEIGHT * WIDTH;
 	long totalTime = (get_clock() - startTime) / 1ns;
-	std::cout << std::endl << std::format("Temps moyen pour un pixel: {:.2f}µs (Total {:.1f}s)", static_cast<double>(pixelTime) / 1000, static_cast<double>(totalTime) / 1e9) << std::endl;
+	std::cout << std::endl << std::format("Temps moyen pour un rayon: {:.2f}µs (Total {:.1f}s)", static_cast<double>(pixelTime) / RAYS_PER_PIXEL / 1000, static_cast<double>(totalTime) / 1e9) << std::endl;
 }
 
 int main() {
 	Vector origin(0, 0, 55);
-	Scene scene(Vector(10, 20, 40), 2e10);
-	scene.addSphere(Sphere(Vector(0, -10, 0), 10, Vector(.5, .2, .9)).transparent(1.5));
+	Scene scene(Vector(10, 20, 0), 2e10);
+	scene.addSphere(Sphere(Vector(-10, -10, 0), 10, Vector(.5, .2, .9)).transparent(1.5));
+	scene.addSphere(Sphere(Vector(5, -15, 20), 5, Vector(.5, .2, .9)));
 
 	scene.addSphere(Sphere(Vector(0, -10020, 0), 10000, .7 * Vector(1, 0, 1)));
 	scene.addSphere(Sphere(Vector(0, +10040, 0), 10000, .7 * Vector(0, 0, 1)));

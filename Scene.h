@@ -29,7 +29,7 @@ public:
 	void addSphere(const Sphere& sphere);
 	[[nodiscard]] IntersectResult intersect(const Ray& ray) const;
 	[[nodiscard]] Vector getColor(const Ray& ray, int maxBounce) const;
-	[[nodiscard]] Vector getColor(const Vector& origin, const Vector& pixel) const;
+	[[nodiscard]] Vector getColor(const Vector& origin, const Vector& pixel, double focusDistance) const;
 
 	std::vector<Sphere> objects;
 	Vector source_pos;
