@@ -52,6 +52,10 @@ Vector Vector::operator-(const Vector& a) const {
 	return {coord[0] - a[0], coord[1] - a[1], coord[2] - a[2]};
 }
 
+Vector Vector::operator-() const {
+	return *this * -1.;
+}
+
 Vector Vector::operator*(double b) const {
 	return {coord[0] * b, coord[1] * b, coord[2] * b};
 }

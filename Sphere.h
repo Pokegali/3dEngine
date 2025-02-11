@@ -22,13 +22,16 @@ public:
 
 	Sphere& mirror();
 	Sphere& transparent(double opticalIndex);
+	Sphere& light(double power);
 
 	Vector center;
 	double radius;
 	Vector albedo;
 	bool mirrors = false;
 	bool isTransparent = false;
+	bool isLight = false;
 	double opticalIndex = 1;
+	double lightPower = 0;
 };
 
 

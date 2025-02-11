@@ -37,3 +37,9 @@ Sphere& Sphere::transparent(double opticalIndex) {
 	return *this;
 }
 
+Sphere& Sphere::light(double power) {
+	this->isLight = true;
+	this->lightPower = power;
+	return *this;
+}
+

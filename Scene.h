@@ -25,15 +25,14 @@ public:
 		double distance = 0;
 	};
 
-	Scene(const Vector& source_pos, double source_intensity);
+	Scene();
 	void addSphere(const Sphere& sphere);
 	[[nodiscard]] IntersectResult intersect(const Ray& ray) const;
-	[[nodiscard]] Vector getColor(const Ray& ray, int maxBounce) const;
+	[[nodiscard]] Vector getColor(const Ray& ray, int maxBounce, bool isIndirect = false) const;
 	[[nodiscard]] Vector getColor(const Vector& origin, const Vector& pixel, double focusDistance) const;
 
 	std::vector<Sphere> objects;
-	Vector source_pos;
-	double source_intensity;
+	Sphere lightSource {Vector(), 0, Vector()};
 
 private:
 	[[nodiscard]] Vector bounceIntersection(const Ray& ray, const IntersectResult& intersection, int maxBounce) const;

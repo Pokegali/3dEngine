@@ -44,16 +44,18 @@ void drawScene(const Scene& scene, const Vector& origin, unsigned char* buffer) 
 
 int main() {
 	Vector origin(0, 0, 55);
-	Scene scene(Vector(10, 20, 0), 2e10);
-	scene.addSphere(Sphere(Vector(-10, -10, 0), 10, Vector(.5, .2, .9)).transparent(1.5));
+	Scene scene;
+	scene.addSphere(Sphere(Vector(10, 20, -25), 1.5, Vector()).light(2e10));
+
+	scene.addSphere(Sphere(Vector(-10, -10, 0), 10, Vector()).transparent(1.5));
 	scene.addSphere(Sphere(Vector(5, -15, 20), 5, Vector(.5, .2, .9)));
 
-	scene.addSphere(Sphere(Vector(0, -10020, 0), 10000, .7 * Vector(1, 0, 1)));
-	scene.addSphere(Sphere(Vector(0, +10040, 0), 10000, .7 * Vector(0, 0, 1)));
-	scene.addSphere(Sphere(Vector(-10040, 0, 0), 10000, .7 * Vector(1, 0, 0)));
-	scene.addSphere(Sphere(Vector(+10040, 0, 0), 10000, .7 * Vector(1, 1, 0)));
-	scene.addSphere(Sphere(Vector(0, 0, -10030), 10000, .7 * Vector(0, 1, 1)));
-	scene.addSphere(Sphere(Vector(0, 0, +10070), 10000, .7 * Vector(0, 1, 0)));
+	scene.addSphere(Sphere(Vector(0, -10020, 0), 10000, .7 * Vector(1, .05, 1)));
+	scene.addSphere(Sphere(Vector(0, +10040, 0), 10000, .7 * Vector(.05, .05, 1)));
+	scene.addSphere(Sphere(Vector(-10040, 0, 0), 10000, .7 * Vector(1, .05, .05)));
+	scene.addSphere(Sphere(Vector(+10040, 0, 0), 10000, .7 * Vector(1, 1, .05)));
+	scene.addSphere(Sphere(Vector(0, 0, -10030), 10000, .7 * Vector(.05, 1, 1)));
+	scene.addSphere(Sphere(Vector(0, 0, +10070), 10000, .7 * Vector(.05, 1, .05)));
 
 	unsigned char image[WIDTH * HEIGHT * 3];
 	drawScene(scene, origin, image);

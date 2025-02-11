@@ -8,6 +8,8 @@
 #include <cmath>
 #include <omp.h>
 
+constexpr double EPSILON = 1e-6;
+
 double getRandomUniform() {
 	return uniform(engines[static_cast<unsigned int>(omp_get_thread_num())]);
 }
@@ -40,12 +42,15 @@ Vector cosRandomVector(const Vector& normal) {
 	return direction[2] * normal + direction[0] * tangent + direction[1] * tangent2;
 }
 
-Scene::Scene(const Vector& source_pos, double source_intensity): source_pos(source_pos), source_intensity(source_intensity) {
+Scene::Scene() {
 	for (unsigned int i = 0; i < 4; i++) { engines[i].seed(i); }
 }
 
 void Scene::addSphere(const Sphere& sphere) {
 	objects.push_back(sphere);
+	if (sphere.isLight) {
+		lightSource = sphere;
+	}
 }
 
 Scene::IntersectResult Scene::intersect(const Ray& ray) const {
@@ -69,20 +74,36 @@ Scene::IntersectResult Scene::intersect(const Ray& ray) const {
 	return {impact, normal, hitObject, hasInter, minT};
 }
 
-Vector Scene::getColor(const Ray& ray, int maxBounce) const {
+Vector Scene::getColor(const Ray& ray, int maxBounce, bool isIndirect) const {
 	IntersectResult intersection = intersect(ray);
 	if (maxBounce < 0 || !intersection.result) { return {0, 0, 0}; }
 	if (intersection.object->isTransparent) { return refractIntersection(ray, intersection, maxBounce); }
 	if (intersection.object->mirrors) { return bounceIntersection(ray, intersection, maxBounce); }
-	Vector travel = source_pos - intersection.impact;
-	double distance_2 = travel.norm2();
+	if (intersection.object->isLight) {
+		if (isIndirect) { return {0, 0, 0}; }
+		double power = intersection.object->lightPower / (4 * M_PI * M_PI * intersection.object->radius * intersection.object->radius);
+		return {power, power, power};
+	}
+	Vector travel = lightSource.center - intersection.impact;
 	Vector lightDirection = travel.normalized();
-	Ray shadowRay(intersection.impact + lightDirection * .001, lightDirection);
+	Vector nPrime = cosRandomVector(-lightDirection);
+	Vector randomLightPath = nPrime * lightSource.radius + lightSource.center - intersection.impact;
+	double distance_2 = randomLightPath.norm2();
+	Vector randomLightDirection = randomLightPath.normalized();
+	Ray shadowRay(intersection.impact + intersection.normal * EPSILON / 10, randomLightDirection);
 	IntersectResult shadowIntersect = intersect(shadowRay);
-	Vector directContribution = shadowIntersect.result && shadowIntersect.distance * shadowIntersect.distance < distance_2
-		? Vector(0, 0, 0)
-		: source_intensity * std::max(0., intersection.normal.dot(lightDirection)) / (4 * M_PI * M_PI * distance_2) * intersection.object->albedo;
-	Vector indirectContribution = getColor(Ray(intersection.impact + .001 * intersection.normal, cosRandomVector(intersection.normal)), maxBounce - 1) * intersection.object->albedo;
+	Vector directContribution;
+	if (shadowIntersect.result && shadowIntersect.distance * shadowIntersect.distance < distance_2 - 100 * EPSILON) {
+		directContribution = Vector(0, 0, 0);
+	} else {
+		double px = std::max(1e-12, -lightDirection.dot(nPrime));
+		directContribution =
+			lightSource.lightPower / (4 * M_PI * M_PI) *
+			intersection.object->albedo *
+			std::max(0., intersection.normal.dot(randomLightDirection)) / px *
+			std::max(0., nPrime.dot(-randomLightDirection)) / distance_2;
+	}
+	Vector indirectContribution = getColor(Ray(intersection.impact + EPSILON * intersection.normal, cosRandomVector(intersection.normal)), maxBounce - 1, true) * intersection.object->albedo;
 	return indirectContribution + directContribution;
 }
 
@@ -103,7 +124,7 @@ Vector Scene::getColor(const Vector& origin, const Vector& pixel, double focusDi
 
 Vector Scene::bounceIntersection(const Ray& ray, const IntersectResult& intersection, int maxBounce) const {
 	Vector direction = ray.direction - 2 * ray.direction.dot(intersection.normal) * intersection.normal;
-	Ray mirrorRay(intersection.impact + .001 * intersection.normal, direction);
+	Ray mirrorRay(intersection.impact + EPSILON * intersection.normal, direction);
 	return getColor(mirrorRay, maxBounce - 1);
 }
 
@@ -125,7 +146,7 @@ Vector Scene::refractIntersection(const Ray& ray, const IntersectResult& interse
 	if (normalSquared < 0) { return bounceIntersection(ray, intersection, maxBounce); }
 	Vector tangent = indexRatio * (ray.direction - sign * incidentNormalComponent * surfaceNormal);
 	Vector normal = -std::sqrt(normalSquared) * surfaceNormal;
-	Ray refractedRay(intersection.impact - .001 * surfaceNormal, normal + tangent);
+	Ray refractedRay(intersection.impact - EPSILON * surfaceNormal, normal + tangent);
 	return getColor(refractedRay, maxBounce);
 }
 
