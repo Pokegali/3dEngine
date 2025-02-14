@@ -4,21 +4,16 @@
 
 #ifndef SPHERE_H
 #define SPHERE_H
+
+#include "Object.h"
 #include "Ray.h"
 #include "Vector.h"
 
 
-class Sphere {
+class Sphere: public Object {
 public:
-	struct IntersectResult {
-		Vector impact;
-		Vector normal;
-		double distance = 0;
-		bool result = false;
-	};
-
 	Sphere(const Vector& center, double radius, const Vector& albedo);
-	[[nodiscard]] IntersectResult intersect(const Ray& ray) const;
+	[[nodiscard]] IntersectResult intersect(const Ray& ray) const override;
 
 	Sphere& mirror();
 	Sphere& transparent(double opticalIndex);
@@ -26,12 +21,6 @@ public:
 
 	Vector center;
 	double radius;
-	Vector albedo;
-	bool mirrors = false;
-	bool isTransparent = false;
-	bool isLight = false;
-	double opticalIndex = 1;
-	double lightPower = 0;
 };
 
 

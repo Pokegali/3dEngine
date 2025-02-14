@@ -5,8 +5,12 @@
 
 #ifndef PROGRESSBAR_H
 #define PROGRESSBAR_H
-#include <chrono>
 
+#include <chrono>
+#include <deque>
+
+constexpr unsigned int UPDATE_INTERVAL = 10;
+constexpr unsigned int UPDATE_AVERAGE = 10;
 
 class Timer {
 public:
@@ -29,20 +33,22 @@ private:
 
 class ProgressBar {
 public:
-	explicit ProgressBar(int totalWork);
-	void update(int workDone);
+	explicit ProgressBar(unsigned int totalWork);
+	void draw();
 	ProgressBar& operator++();
 	double stop();
 	[[nodiscard]] double timeTaken() const;
-	[[nodiscard]] int processed() const;
+	[[nodiscard]] unsigned int processed() const;
 
 private:
-	int totalWork;
-	int callDiff;
+	unsigned int totalWork;
+	unsigned int callDiff;
 	double lastUpdateTime = 0;
-	int workDone = 0;
+	unsigned int loopsWithoutUpdate = 0;
+	unsigned int workDone = 0;
 	Timer timer;
 	unsigned int size = 50;
+	std::deque<std::pair<double, unsigned int>> lastUpdates;
 
 	static void clearConsoleLine() ;
 };

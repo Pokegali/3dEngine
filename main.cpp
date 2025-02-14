@@ -24,7 +24,7 @@ void drawScene(const Scene& scene, const Vector& origin, unsigned char* buffer) 
 	long pixelTime = 0;
 	auto startTime = get_clock();
 	ProgressBar progressBar(HEIGHT * WIDTH);
-#pragma omp parallel for default(none) schedule(static) shared(scene, origin, buffer, pixelTime, progressBar)
+#pragma omp parallel for default(none) schedule(dynamic) shared(scene, origin, buffer, pixelTime, progressBar)
 	for (int i = 0; i < HEIGHT; i++) {
 		auto lineStartTime = get_clock();
 		for (int j = 0; j < WIDTH; j++) {
@@ -33,7 +33,7 @@ void drawScene(const Scene& scene, const Vector& origin, unsigned char* buffer) 
 			buffer[(i * WIDTH + j) * 3 + 0] = adjustColor(color[0]);
 			buffer[(i * WIDTH + j) * 3 + 1] = adjustColor(color[1]);
 			buffer[(i * WIDTH + j) * 3 + 2] = adjustColor(color[2]);
-			progressBar.update(i * WIDTH + j + 1);
+			++progressBar;
 		}
 		pixelTime += (get_clock() - lineStartTime) / 1ns;
 	}
@@ -45,17 +45,21 @@ void drawScene(const Scene& scene, const Vector& origin, unsigned char* buffer) 
 int main() {
 	Vector origin(0, 0, 55);
 	Scene scene;
-	scene.addSphere(Sphere(Vector(10, 20, -25), 1.5, Vector()).light(2e10));
+	scene.addSphere(&(new Sphere(Vector(10, 20, -25), 1.5, Vector()))->light(2e10));
 
-	scene.addSphere(Sphere(Vector(-10, -10, 0), 10, Vector()).transparent(1.5));
-	scene.addSphere(Sphere(Vector(5, -15, 20), 5, Vector(.5, .2, .9)));
+	// scene.addSphere(&(new Sphere(Vector(-10, -10, 0), 10, Vector()))->transparent(1.5));
+	// scene.addSphere(new Sphere(Vector(5, -15, 20), 5, Vector(.5, .2, .9)));
+	auto* mesh = new TriangleMesh(Vector(.01, .01, .9));
+	mesh->readOBJ("../objects/cat/cat.obj");
+	mesh->scaleTranslate(.6, Vector(0, -20, 0));
+	scene.addMesh(mesh);
 
-	scene.addSphere(Sphere(Vector(0, -10020, 0), 10000, .7 * Vector(1, .05, 1)));
-	scene.addSphere(Sphere(Vector(0, +10040, 0), 10000, .7 * Vector(.05, .05, 1)));
-	scene.addSphere(Sphere(Vector(-10040, 0, 0), 10000, .7 * Vector(1, .05, .05)));
-	scene.addSphere(Sphere(Vector(+10040, 0, 0), 10000, .7 * Vector(1, 1, .05)));
-	scene.addSphere(Sphere(Vector(0, 0, -10030), 10000, .7 * Vector(.05, 1, 1)));
-	scene.addSphere(Sphere(Vector(0, 0, +10070), 10000, .7 * Vector(.05, 1, .05)));
+	scene.addSphere(new Sphere(Vector(0, -10020, 0), 10000, .7 * Vector(1, .05, 1)));
+	scene.addSphere(new Sphere(Vector(0, +10040, 0), 10000, .7 * Vector(.05, .05, 1)));
+	scene.addSphere(new Sphere(Vector(-10040, 0, 0), 10000, .7 * Vector(1, .05, .05)));
+	scene.addSphere(new Sphere(Vector(+10040, 0, 0), 10000, .7 * Vector(1, 1, .05)));
+	scene.addSphere(new Sphere(Vector(0, 0, -10030), 10000, .7 * Vector(.05, 1, 1)));
+	scene.addSphere(new Sphere(Vector(0, 0, +10070), 10000, .7 * Vector(.05, 1, .05)));
 
 	unsigned char image[WIDTH * HEIGHT * 3];
 	drawScene(scene, origin, image);

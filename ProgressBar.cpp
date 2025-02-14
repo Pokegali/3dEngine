@@ -37,27 +37,30 @@ void Timer::reset() {
 	running = false;
 }
 
-ProgressBar::ProgressBar(int totalWork): totalWork(totalWork), callDiff(totalWork / 400) {
+ProgressBar::ProgressBar(unsigned int totalWork): totalWork(totalWork), callDiff(totalWork / 400) {
 	clearConsoleLine();
 	timer.start();
+	for (unsigned int i = 0; i < UPDATE_AVERAGE; i++) {
+		lastUpdates.emplace_back(timer.lap(), 0);
+	}
 }
 
 void ProgressBar::clearConsoleLine() { std::cout << "\r\033[2K" << std::flush; }
 
-void ProgressBar::update(int workDone) {
+void ProgressBar::draw() {
 #ifdef NOPROGRESS
 	return;
 #endif
-	if (omp_get_thread_num() != 0) { return; }
-	this->workDone = workDone;
 	double currentTime = timer.lap();
-	if (currentTime - lastUpdateTime < .1 && workDone != totalWork) { return; }
+	if (currentTime - lastUpdateTime < .1 && processed() != totalWork) { return; }
 	lastUpdateTime = currentTime;
-	double percent = static_cast<double>(workDone) * omp_get_num_threads() * 100 / totalWork;
+	double percent = static_cast<double>(workDone) * 100 / totalWork;
 	auto full = static_cast<unsigned int>(size * percent / 100);
 	auto more = static_cast<unsigned int>(size * percent * 8 / 100 - full * 8);
 	if (percent > 100) { percent = 100; }
-	double secondsLeft = currentTime / percent * (100 - percent);
+	const std::pair<double, unsigned int>& reference = lastUpdates.front();
+	double iterationsPerSecond = static_cast<double>(workDone - reference.second) / (currentTime - reference.first);
+	double secondsLeft = static_cast<double>(totalWork - workDone) / iterationsPerSecond;
 	int minutesLeft = static_cast<int>(secondsLeft / 60);
 	secondsLeft -= minutesLeft * 60;
 	static const unsigned char characters[] = {0x8f, 0x8e, 0x8d, 0x8c, 0x8b, 0x8a, 0x89, 0x88};
@@ -68,21 +71,26 @@ void ProgressBar::update(int workDone) {
 	std::cout << std::string(size - full - 1, ' ')
 			  << "] ("
 			  << percent << "% - "
-			  << (minutesLeft ? std::format("{}m {:.1f}", minutesLeft, secondsLeft) : std::format("{:.1f}", secondsLeft))
+			  << (minutesLeft ? std::format("{}m {:.0f}", minutesLeft, secondsLeft) : std::format("{:.1f}", secondsLeft))
 			  << "s - "
 			  << omp_get_num_threads() <<  " threads - "
-	          << std::fixed << std::setprecision(0) << workDone / currentTime << " it/s)" << std::flush;
+	          << std::fixed << std::setprecision(0) << iterationsPerSecond << " it/s)" << std::flush;
+	if (loopsWithoutUpdate == UPDATE_INTERVAL) {
+		lastUpdates.emplace_back(currentTime, workDone);
+		lastUpdates.pop_front();
+		loopsWithoutUpdate = 0;
+	} else {
+		++loopsWithoutUpdate;
+	}
 }
 
 ProgressBar& ProgressBar::operator++() {
-	if (omp_get_thread_num() != 0) { return *this; }
 	workDone++;
-	update(workDone);
+	draw();
 	return *this;
 }
 
 double ProgressBar::stop() {
-	clearConsoleLine();
 	timer.stop();
 	return timer.accumulated();
 }
@@ -91,6 +99,6 @@ double ProgressBar::timeTaken() const {
 	return timer.accumulated();
 }
 
-int ProgressBar::processed() const {
+unsigned int ProgressBar::processed() const {
 	return workDone;
 }

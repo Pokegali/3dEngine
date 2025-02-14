@@ -8,7 +8,7 @@
 
 #include "Ray.h"
 
-Sphere::Sphere(const Vector& center, double radius, const Vector& albedo): center(center), radius(radius), albedo(albedo) {}
+Sphere::Sphere(const Vector& center, double radius, const Vector& albedo): Object(albedo), center(center), radius(radius) {}
 
 Sphere::IntersectResult Sphere::intersect(const Ray& ray) const {
 	double a = 1;
