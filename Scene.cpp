@@ -11,7 +11,7 @@
 constexpr double EPSILON = 1e-6;
 
 double getRandomUniform() {
-	return uniform(engines[static_cast<unsigned int>(omp_get_thread_num())]);
+	return uniform(engines[static_cast<uint32_t>(omp_get_thread_num())]);
 }
 
 std::pair<double, double> boxMuller(double stdDev) {
@@ -43,7 +43,7 @@ Vector cosRandomVector(const Vector& normal) {
 }
 
 Scene::Scene() {
-	for (unsigned int i = 0; i < 4; i++) { engines[i].seed(i); }
+	for (uint32_t i = 0; i < 4; i++) { engines[i].seed(i); }
 }
 
 void Scene::addSphere(const Sphere* sphere) {

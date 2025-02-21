@@ -13,13 +13,13 @@ constexpr double ALPHA = 60 * M_PI / 180;
 constexpr int HEIGHT = 512;
 constexpr int WIDTH = 512;
 
-unsigned char adjustColor(double color) {
-	return static_cast<unsigned char>(std::min(255., std::pow(color, 1 / 2.2)));
+uint8_t adjustColor(double color) {
+	return static_cast<uint8_t>(std::min(255., std::pow(color, 1 / 2.2)));
 }
 
 constexpr auto get_clock = std::chrono::high_resolution_clock::now;
 
-void drawScene(const Scene& scene, const Vector& origin, unsigned char* buffer) {
+void drawScene(const Scene& scene, const Vector& origin, uint8_t* buffer) {
 	using std::chrono_literals::operator ""ns;
 	long pixelTime = 0;
 	auto startTime = get_clock();
@@ -39,7 +39,7 @@ void drawScene(const Scene& scene, const Vector& origin, unsigned char* buffer) 
 	}
 	pixelTime /= HEIGHT * WIDTH;
 	long totalTime = (get_clock() - startTime) / 1ns;
-	std::cout << std::endl << std::format("Temps moyen pour un rayon: {:.2f}µs (Total {:.1f}s)", static_cast<double>(pixelTime) / RAYS_PER_PIXEL / 1000, static_cast<double>(totalTime) / 1e9) << std::endl;
+	std::cout << std::format("\nTemps moyen pour un rayon: {:.2f}µs (Total {:.1f}s)", static_cast<double>(pixelTime) / RAYS_PER_PIXEL / 1000, static_cast<double>(totalTime) / 1e9) << std::endl;
 }
 
 int main() {
@@ -51,7 +51,7 @@ int main() {
 	// scene.addSphere(new Sphere(Vector(5, -15, 20), 5, Vector(.5, .2, .9)));
 	auto* mesh = new TriangleMesh(Vector(.01, .01, .9));
 	mesh->readOBJ("../objects/cat/cat.obj");
-	mesh->scaleTranslate(.6, Vector(0, -20, 0));
+	mesh->scaleTranslate(.6, Vector(0, -20, -10));
 	scene.addMesh(mesh);
 
 	scene.addSphere(new Sphere(Vector(0, -10020, 0), 10000, .7 * Vector(1, .05, 1)));
@@ -61,7 +61,7 @@ int main() {
 	scene.addSphere(new Sphere(Vector(0, 0, -10030), 10000, .7 * Vector(.05, 1, 1)));
 	scene.addSphere(new Sphere(Vector(0, 0, +10070), 10000, .7 * Vector(.05, 1, .05)));
 
-	unsigned char image[WIDTH * HEIGHT * 3];
+	auto* image = new unsigned char[WIDTH * HEIGHT * 3];
 	drawScene(scene, origin, image);
 	stbi_write_png("image.png", WIDTH, HEIGHT, 3, image, 0);
 

@@ -5,14 +5,16 @@
 #ifndef VECTOR_H
 #define VECTOR_H
 
+#include <cstdint>
+
 
 class Vector {
 public:
 	Vector();
 	Vector(double x, double y, double z);
 
-	double& operator[](int i);
-	double operator[](int i) const;
+	double& operator[](uint32_t i);
+	double operator[](uint32_t i) const;
 
 	Vector& operator+=(const Vector& v);
 	Vector& operator/=(double);

@@ -5,23 +5,26 @@
 #ifndef TRIANGLEMESH_H
 #define TRIANGLEMESH_H
 
-//
-// Created by remi on 14/02/25.
-//
-
+#include <array>
 #include <vector>
+#include <cstdint>
+#include <climits>
 
 #include "Object.h"
 #include "Vector.h"
 
 class TriangleIndices {
 public:
-	explicit TriangleIndices(int vtxi = -1, int vtxj = -1, int vtxk = -1, int ni = -1, int nj = -1, int nk = -1, int uvi = -1, int uvj = -1, int uvk = -1, int group = -1, bool added = false) : vtxi(vtxi), vtxj(vtxj), vtxk(vtxk), uvi(uvi), uvj(uvj), uvk(uvk), ni(ni), nj(nj), nk(nk), group(group) {};
+	explicit TriangleIndices() = default;
 
-	int vtxi, vtxj, vtxk; // indices within the vertex coordinates array
-	int uvi, uvj, uvk;  // indices within the uv coordinates array
-	int ni, nj, nk;  // indices within the normals array
-	int group;       // face group
+	std::array<uint32_t, 3> vertexIndices {};
+	std::array<uint32_t, 3> colorIndices {};
+	std::array<uint32_t, 3> normalIndices {};
+
+	// uint32_t vtxi, vtxj, vtxk; // indices within the vertex coordinates array
+	// uint32_t uvi, uvj, uvk;  // indices within the uv coordinates array
+	// uint32_t ni, nj, nk;  // indices within the normals array
+	uint32_t group = UINT_MAX;       // face group
 };
 
 class BoundingBox {
@@ -41,7 +44,7 @@ public:
 	void scaleTranslate(double scale, const Vector& translation);
 	[[nodiscard]] IntersectResult intersect(const Ray& ray) const override;
 
-	std::vector<TriangleIndices> indices;
+	std::vector<TriangleIndices> triangles;
 	std::vector<Vector> vertices;
 	std::vector<Vector> normals;
 	std::vector<Vector> uvs;

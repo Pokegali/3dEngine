@@ -11,8 +11,8 @@ static double square(double x) { return x * x; }
 Vector::Vector(): coord{0, 0, 0} {}
 Vector::Vector(double x, double y, double z): coord{x, y, z} {}
 
-double& Vector::operator[](int i) { return coord[i]; }
-double Vector::operator[](int i) const { return coord[i]; }
+double& Vector::operator[](uint32_t i) { return coord[i]; }
+double Vector::operator[](uint32_t i) const { return coord[i]; }
 
 Vector& Vector::operator+=(const Vector& v) {
 	*this = *this + v;

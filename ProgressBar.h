@@ -9,8 +9,8 @@
 #include <chrono>
 #include <deque>
 
-constexpr unsigned int UPDATE_INTERVAL = 10;
-constexpr unsigned int UPDATE_AVERAGE = 10;
+constexpr uint32_t UPDATE_INTERVAL = 10;
+constexpr uint32_t UPDATE_AVERAGE = 10;
 
 class Timer {
 public:
@@ -33,22 +33,22 @@ private:
 
 class ProgressBar {
 public:
-	explicit ProgressBar(unsigned int totalWork);
+	explicit ProgressBar(uint32_t totalWork);
 	void draw();
 	ProgressBar& operator++();
 	double stop();
 	[[nodiscard]] double timeTaken() const;
-	[[nodiscard]] unsigned int processed() const;
+	[[nodiscard]] uint32_t processed() const;
 
 private:
-	unsigned int totalWork;
-	unsigned int callDiff;
+	uint32_t totalWork;
+	uint32_t callDiff;
 	double lastUpdateTime = 0;
-	unsigned int loopsWithoutUpdate = 0;
-	unsigned int workDone = 0;
+	uint32_t loopsWithoutUpdate = 0;
+	uint32_t workDone = 0;
 	Timer timer;
-	unsigned int size = 50;
-	std::deque<std::pair<double, unsigned int>> lastUpdates;
+	uint32_t size = 50;
+	std::deque<std::pair<double, uint32_t>> lastUpdates;
 
 	static void clearConsoleLine() ;
 };
