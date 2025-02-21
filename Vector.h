@@ -5,6 +5,7 @@
 #ifndef VECTOR_H
 #define VECTOR_H
 
+#include <array>
 #include <cstdint>
 
 
@@ -12,6 +13,8 @@ class Vector {
 public:
 	Vector();
 	Vector(double x, double y, double z);
+
+	[[nodiscard]] std::array<double, 3> getCoordinates() const;
 
 	double& operator[](uint32_t i);
 	double operator[](uint32_t i) const;
@@ -33,7 +36,7 @@ public:
 	[[nodiscard]] Vector normalized() const;
 
 private:
-	double coord[3];
+	std::array<double, 3> coord;
 };
 
 Vector operator*(double, const Vector&);

@@ -4,12 +4,15 @@
 #include <array>
 #include <cstdio>
 #include <fstream>
+#include <iostream>
 #include <limits>
+#include <stack>
 #include <string>
 
 
 TriangleMesh::TriangleMesh(const Vector& albedo): Object(albedo) {}
 
+// Adapted from https://pastebin.com/CAgp9r15
 void TriangleMesh::readOBJ(const char* obj) {
 	std::ifstream stream(obj);
 	std::string line;
@@ -71,10 +74,16 @@ void TriangleMesh::readOBJ(const char* obj) {
 		}
 	}
 	stream.close();
-	buildBoundingBox();
+	computeTriangleBarycenters();
 }
 
-bool BoundingBox::intersect(const Ray& ray) const {
+void TriangleMesh::computeTriangleBarycenters() {
+	for (TriangleIndices& triangle: triangles) {
+		triangle.barycenter = (vertices[triangle.vertexIndices[0]] + vertices[triangle.vertexIndices[1]] + vertices[triangle.vertexIndices[2]]) / 3;
+	}
+}
+
+BoundingBox::IntersectResult BoundingBox::intersect(const Ray& ray) const {
 	std::array<double, 3> minT {};
 	std::array<double, 3> maxT {};
 	Vector om = min - ray.origin;
@@ -86,41 +95,42 @@ bool BoundingBox::intersect(const Ray& ray) const {
 		maxT[i] = std::max(inter1, inter2);
 	}
 	double minOfMax = *std::ranges::min_element(maxT);
-	return minOfMax > 0 && minOfMax > *std::ranges::max_element(minT);
+	double maxOfMin = *std::ranges::max_element(minT);
+	return {maxOfMin, minOfMax > 0 && minOfMax > maxOfMin};
 }
 
-void TriangleMesh::buildBoundingBox() {
+Vector BoundingBox::extent() const {
+	return max - min;
+}
+
+BoundingVolumeHierarchy::BoundingVolumeHierarchy(uint32_t start, uint32_t end, const TriangleMesh& mesh): rangeStart(start), rangeEnd(end), mesh(mesh) {}
+
+void BoundingVolumeHierarchy::buildBoundingBox() {
 	Vector min = std::numeric_limits<double>::infinity() * Vector(1, 1, 1);
 	Vector max = -min;
-	for (const Vector& vertex: vertices) {
-		for (uint32_t i = 0; i < 3; i++) {
-			if (vertex[i] > max[i]) { max[i] = vertex[i]; }
-			if (vertex[i] < min[i]) { min[i] = vertex[i]; }
+	for (uint32_t triangle = rangeStart; triangle < rangeEnd; triangle++) {
+		for (const uint32_t& vertex: mesh.triangles[triangle].vertexIndices) {
+			for (uint32_t i = 0; i < 3; i++) {
+				const Vector& coordinates = mesh.vertices[vertex];
+				if (coordinates[i] > max[i]) { max[i] = coordinates[i]; }
+				if (coordinates[i] < min[i]) { min[i] = coordinates[i]; }
+			}
 		}
 	}
 	boundingBox.min = min;
 	boundingBox.max = max;
 }
 
-void TriangleMesh::scaleTranslate(double scale, const Vector& translation) {
-	for (Vector& vertex: vertices) {
-		vertex = vertex * scale + translation;
-	}
-	buildBoundingBox();
-}
-
-Object::IntersectResult TriangleMesh::intersect(const Ray& ray) const {
-	if (!boundingBox.intersect(ray)) {
-		return {{}, {}, 0, false};
-	}
+Object::IntersectResult BoundingVolumeHierarchy::intersect(const Ray& ray) const {
 	bool hasInter = false;
 	double bestT = std::numeric_limits<double>::infinity();
 	Vector bestNormal;
 	Vector bestImpact;
-	for (const auto& triangle : triangles) {
-		const Vector& a = vertices[triangle.vertexIndices[0]];
-		const Vector& b = vertices[triangle.vertexIndices[1]];
-		const Vector& c = vertices[triangle.vertexIndices[2]];
+	for (uint32_t index = rangeStart; index < rangeEnd; ++index) {
+		const TriangleIndices& triangle = mesh.triangles[index];
+		const Vector& a = mesh.vertices[triangle.vertexIndices[0]];
+		const Vector& b = mesh.vertices[triangle.vertexIndices[1]];
+		const Vector& c = mesh.vertices[triangle.vertexIndices[2]];
 		Vector e1 = b - a;
 		Vector e2 = c - a;
 		Vector ao = ray.origin - a;
@@ -135,10 +145,61 @@ Object::IntersectResult TriangleMesh::intersect(const Ray& ray) const {
 		if (alpha < 0) { continue; }
 		double t = -ao.dot(normal) * invDet;
 		if (t < 0 || t > bestT) { continue; }
+		Vector correctedNormal = mesh.normals[triangle.normalIndices[0]] * alpha + mesh.normals[triangle.normalIndices[1]] * beta + mesh.normals[triangle.normalIndices[2]] * gamma;
 		hasInter = true;
 		bestT = t;
 		bestImpact = ray.origin + t * ray.direction;
-		bestNormal = normal;
+		bestNormal = correctedNormal;
 	}
 	return {bestImpact, bestNormal, bestT, hasInter};
+}
+
+void TriangleMesh::buildBvh() {
+	rootBvh = new BoundingVolumeHierarchy(0, triangles.size(), *this);
+	buildBvh(rootBvh);
+}
+
+void TriangleMesh::buildBvh(BoundingVolumeHierarchy* bvh) {
+	bvh->buildBoundingBox();
+	if (bvh->rangeEnd - bvh->rangeStart <= 4) { return; }
+	std::array<double, 3> extent = bvh->boundingBox.extent().getCoordinates();
+	long longestDirection = std::distance(extent.begin(), std::ranges::max_element(extent));
+	std::sort(triangles.begin() + bvh->rangeStart, triangles.begin() + bvh->rangeEnd, [longestDirection](const TriangleIndices& t1, const TriangleIndices& t2) { return t1.barycenter[longestDirection] < t2.barycenter[longestDirection]; });
+	long pivotIndex = (bvh->rangeStart + bvh->rangeEnd) / 2;
+	// double limit = (bvh->boundingBox.max[longestDirection] + bvh->boundingBox.min[longestDirection]) / 2;
+	// auto pivot = std::partition(triangles.begin() + bvh->rangeStart, triangles.begin() + bvh->rangeEnd, [longestDirection, limit](const TriangleIndices& triangle) { return triangle.barycenter[longestDirection] <= limit; });
+	// long pivotIndex = std::distance(triangles.begin(), pivot);
+	if (pivotIndex == bvh->rangeStart || pivotIndex == bvh->rangeEnd) { return; }
+	auto* left = new BoundingVolumeHierarchy(bvh->rangeStart, pivotIndex, *this);
+	auto* right = new BoundingVolumeHierarchy(pivotIndex, bvh->rangeEnd, *this);
+	bvh->leftChild = left;
+	bvh->rightChild = right;
+	buildBvh(left);
+	buildBvh(right);
+}
+
+void TriangleMesh::scaleTranslate(double scale, const Vector& translation) {
+	for (Vector& vertex: vertices) {
+		vertex = vertex * scale + translation;
+	}
+}
+
+Object::IntersectResult TriangleMesh::intersect(const Ray& ray) const {
+	std::stack<const BoundingVolumeHierarchy*> stack;
+	IntersectResult bestIntersect {{}, {}, std::numeric_limits<double>::infinity()};
+	if (!rootBvh->boundingBox.intersect(ray).result) { return {}; }
+	stack.push(rootBvh);
+	BoundingBox::IntersectResult intersect;
+	while (!stack.empty()) {
+		const BoundingVolumeHierarchy* bvh = stack.top();
+		stack.pop();
+		if (bvh->leftChild != nullptr) {
+			if (intersect = bvh->leftChild->boundingBox.intersect(ray); intersect.result && intersect.distance < bestIntersect.distance) { stack.push(bvh->leftChild); }
+			if (intersect = bvh->rightChild->boundingBox.intersect(ray); intersect.result && intersect.distance < bestIntersect.distance) { stack.push(bvh->rightChild); }
+		} else {
+			IntersectResult result = bvh->intersect(ray);
+			if (result.distance < bestIntersect.distance) { bestIntersect = result; }
+		}
+	}
+	return bestIntersect;
 }

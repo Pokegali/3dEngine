@@ -11,7 +11,7 @@
 #include "Sphere.h"
 #include "TriangleMesh.h"
 
-constexpr int RAYS_PER_PIXEL = 10;
+constexpr int RAYS_PER_PIXEL = 128;
 constexpr int MAX_BOUNCE = 5;
 
 static std::array<std::default_random_engine, 4> engines;
