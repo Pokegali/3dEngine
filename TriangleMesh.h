@@ -45,6 +45,7 @@ public:
 class BoundingVolumeHierarchy {
 public:
 	BoundingVolumeHierarchy(uint32_t start, uint32_t end, const TriangleMesh& mesh);
+	~BoundingVolumeHierarchy();
 
 	void buildBoundingBox();
 	[[nodiscard]] Object::IntersectResult intersect(const Ray& ray) const;
@@ -67,6 +68,7 @@ public:
 	};
 
 	explicit TriangleMesh(const Vector& albedo);
+	~TriangleMesh() override;
 
 	void readOBJ(const char* obj);
 	void loadTexture(const char* fileName);

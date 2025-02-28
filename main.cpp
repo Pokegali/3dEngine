@@ -46,10 +46,20 @@ int main() {
 	double angle = -10 * M_PI / 180;
 	Camera camera({0, 10, 55}, {0, std::sin(angle), -std::cos(angle)}, {0, std::cos(angle), std::sin(angle)});
 	Scene scene;
-	scene.addSphere(&(new Sphere(Vector(20, 20, 40), 5, Vector()))->light(2e10));
 
-	// scene.addSphere(&(new Sphere(Vector(-10, -10, 0), 10, Vector()))->transparent(1.5));
-	scene.addSphere(new Sphere(Vector(15, -18, 3), 2, Vector(.5, .2, .9)));
+	const Sphere spheres[] = {
+		Sphere(Vector(20, 20, 40), 5, Vector()).light(2e10),
+		Sphere(Vector(15, -18, 3), 2, Vector(.5, .2, .9)),
+		Sphere(Vector(0, -10020, 0), 10000, .2 * Vector(1, 1, 1)),
+		Sphere(Vector(0, +10040, 0), 10000, .2 * Vector(1, 1, 1)),
+		Sphere(Vector(-10040, 0, 0), 10000, .2 * Vector(1, 1, 1)),
+		Sphere(Vector(+10040, 0, 0), 10000, .2 * Vector(1, 1, 1)),
+		Sphere(Vector(0, 0, -10030), 10000, .2 * Vector(1, 1, 1)),
+		Sphere(Vector(0, 0, +10070), 10000, .2 * Vector(1, 1, 1))
+	};
+
+	for (const Sphere& sphere: spheres) { scene.addSphere(&sphere); }
+
 	auto* mesh = new TriangleMesh(Vector(.9, .05, .05));
 	mesh->readOBJ("../objects/Cobalion/Cobalion.obj");
 	mesh->loadTexture("../objects/Cobalion/Cobalion_Mouth.png");
@@ -61,16 +71,12 @@ int main() {
 	mesh->buildBvh();
 	scene.addMesh(mesh);
 
-	scene.addSphere(new Sphere(Vector(0, -10020, 0), 10000, .2 * Vector(1, 1, 1)));
-	scene.addSphere(new Sphere(Vector(0, +10040, 0), 10000, .2 * Vector(1, 1, 1)));
-	scene.addSphere(new Sphere(Vector(-10040, 0, 0), 10000, .2 * Vector(1, 1, 1)));
-	scene.addSphere(new Sphere(Vector(+10040, 0, 0), 10000, .2 * Vector(1, 1, 1)));
-	scene.addSphere(new Sphere(Vector(0, 0, -10030), 10000, .2 * Vector(1, 1, 1)));
-	scene.addSphere(new Sphere(Vector(0, 0, +10070), 10000, .2 * Vector(1, 1, 1)));
-
 	auto* image = new unsigned char[WIDTH * HEIGHT * 3];
 	drawScene(scene, camera, image);
 	stbi_write_png("image.png", WIDTH, HEIGHT, 3, image, 0);
+
+	delete mesh;
+	delete[] image;
 
 	return 0;
 }

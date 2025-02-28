@@ -5,6 +5,7 @@
 
 #include "ProgressBar.h"
 
+#include <iomanip>
 #include <iostream>
 #include <iterator>
 #include <omp.h>

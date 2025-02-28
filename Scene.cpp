@@ -123,7 +123,7 @@ Vector Scene::getColor(const Camera& camera, const Vector& pixel, double focusDi
 		Vector u = (pixel + Vector(.5 + dxPixel, -.5 - dyPixel, 0) - camera.origin).normalized();
 		u = u[0] * camera.right + u[1] * camera.up + u[2] * camera.front;
 		Vector newOrigin = camera.origin + Vector(dxCamera, dyCamera, 0);
-		Vector destination = camera.origin + u / u.dot({0, 0, -1}) * focusDistance;
+		Vector destination = camera.origin + u / u.dot(camera.front) * focusDistance;
 		Vector newDirection = destination - newOrigin;
 		Ray ray(newOrigin, newDirection.normalized());
 		color += getColor(ray, MAX_BOUNCE);

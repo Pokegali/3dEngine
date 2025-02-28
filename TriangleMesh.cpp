@@ -13,6 +13,7 @@
 #include "stb_image.h"
 
 TriangleMesh::TriangleMesh(const Vector& albedo): Object(albedo) {}
+TriangleMesh::~TriangleMesh() { delete rootBvh; }
 
 // Adapted from https://pastebin.com/CAgp9r15
 void TriangleMesh::readOBJ(const char* obj) {
@@ -85,6 +86,7 @@ void TriangleMesh::loadTexture(const char* fileName) {
 	texture.data.reserve(width * height * 3);
 	std::transform(textureData, textureData + width * height * 3, std::back_inserter(texture.data), [](const uint8_t& x) { return std::pow(static_cast<double>(x) / 255, 2.2); });
 	textures.push_back(texture);
+	stbi_image_free(textureData);
 }
 
 void TriangleMesh::computeTriangleBarycenters() {
@@ -114,6 +116,10 @@ Vector BoundingBox::extent() const {
 }
 
 BoundingVolumeHierarchy::BoundingVolumeHierarchy(uint32_t start, uint32_t end, const TriangleMesh& mesh): rangeStart(start), rangeEnd(end), mesh(mesh) {}
+BoundingVolumeHierarchy::~BoundingVolumeHierarchy() {
+	delete leftChild;
+	delete rightChild;
+}
 
 void BoundingVolumeHierarchy::buildBoundingBox() {
 	Vector min = std::numeric_limits<double>::infinity() * Vector(1, 1, 1);
