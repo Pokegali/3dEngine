@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <cstdio>
 #include <fstream>
 #include <iostream>
@@ -181,6 +182,16 @@ void TriangleMesh::buildBvh(BoundingVolumeHierarchy* bvh) {
 void TriangleMesh::scaleTranslate(double scale, const Vector& translation) {
 	for (Vector& vertex: vertices) {
 		vertex = vertex * scale + translation;
+	}
+}
+
+void TriangleMesh::rotate(double angleRad) {
+	double cos = std::cos(angleRad);
+	double sin = std::sin(angleRad);
+	for (Vector& vertex: vertices) {
+		auto [vx, vy, vz] = vertex.getCoordinates();
+		vertex[0] = vx * cos + vz * sin;
+		vertex[2] = vx * -sin + vz * cos;
 	}
 }
 

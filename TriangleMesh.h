@@ -69,6 +69,7 @@ public:
 	void computeTriangleBarycenters();
 	void buildBvh();
 	void scaleTranslate(double scale, const Vector& translation);
+	void rotate(double angleRad);
 	[[nodiscard]] IntersectResult intersect(const Ray& ray) const override;
 
 	std::vector<TriangleIndices> triangles;

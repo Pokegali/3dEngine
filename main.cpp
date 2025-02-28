@@ -49,9 +49,10 @@ int main() {
 
 	// scene.addSphere(&(new Sphere(Vector(-10, -10, 0), 10, Vector()))->transparent(1.5));
 	scene.addSphere(new Sphere(Vector(15, -18, 3), 2, Vector(.5, .2, .9)));
-	auto* mesh = new TriangleMesh(Vector(.4, .4, .4));
-	mesh->readOBJ("../objects/cat/cat.obj");
-	mesh->scaleTranslate(.6, Vector(0, -20, 0));
+	auto* mesh = new TriangleMesh(Vector(.05, .5, .5));
+	mesh->readOBJ("../objects/Cobalion/Cobalion.obj");
+	mesh->rotate(M_PI / 3);
+	mesh->scaleTranslate(3.5, Vector(0, -20, 0));
 	mesh->buildBvh();
 	scene.addMesh(mesh);
 

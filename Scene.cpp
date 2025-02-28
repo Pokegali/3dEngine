@@ -6,6 +6,7 @@
 
 #include <limits>
 #include <cmath>
+#include <iostream>
 #include <omp.h>
 
 constexpr double EPSILON = 1e-6;
@@ -15,8 +16,8 @@ double getRandomUniform() {
 }
 
 std::pair<double, double> boxMuller(double stdDev) {
-	double u1 = getRandomUniform();
-	double u2 = getRandomUniform();
+	double u1 = getRandomUniform() + 1e-16; // Or else it might return 0 at some point but only with -O0
+	double u2 = getRandomUniform() + 1e-16;
 	double r = std::sqrt(-2 * std::log(u1));
 	return {r * std::cos(2 * M_PI * u2) * stdDev, r * std::sin(2 * M_PI * u2) * stdDev};
 }
