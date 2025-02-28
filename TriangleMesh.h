@@ -24,9 +24,6 @@ public:
 	std::array<uint32_t, 3> normalIndices {};
 	Vector barycenter;
 
-	// uint32_t vtxi, vtxj, vtxk; // indices within the vertex coordinates array
-	// uint32_t uvi, uvj, uvk;  // indices within the uv coordinates array
-	// uint32_t ni, nj, nk;  // indices within the normals array
 	uint32_t group = UINT_MAX;       // face group
 };
 

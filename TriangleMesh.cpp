@@ -76,13 +76,11 @@ void TriangleMesh::readOBJ(const char* obj) {
 		}
 	}
 	stream.close();
-	computeTriangleBarycenters();
 }
 
 void TriangleMesh::loadTexture(const char* fileName) {
 	int width, height, channels;
 	uint8_t* textureData = stbi_load(fileName, &width, &height, &channels, STBI_rgb);
-	// std::cout << fileName << " " << width << " " << height << " " << channels << std::endl;
 	Texture texture {{}, width, height};
 	texture.data.reserve(width * height * 3);
 	std::transform(textureData, textureData + width * height * 3, std::back_inserter(texture.data), [](const uint8_t& x) { return std::pow(static_cast<double>(x) / 255, 2.2); });
@@ -106,8 +104,8 @@ BoundingBox::IntersectResult BoundingBox::intersect(const Ray& ray) const {
 		minT[i] = std::min(inter1, inter2);
 		maxT[i] = std::max(inter1, inter2);
 	}
-	double minOfMax = *std::ranges::min_element(maxT);
-	double maxOfMin = *std::ranges::max_element(minT);
+	double minOfMax = std::min(maxT[0], std::min(maxT[1], maxT[2]));
+	double maxOfMin = std::max(minT[0], std::max(minT[1], minT[2]));
 	return {maxOfMin, minOfMax > 0 && minOfMax > maxOfMin};
 }
 
@@ -178,6 +176,7 @@ Object::IntersectResult BoundingVolumeHierarchy::intersect(const Ray& ray) const
 }
 
 void TriangleMesh::buildBvh() {
+	computeTriangleBarycenters();
 	rootBvh = new BoundingVolumeHierarchy(0, triangles.size(), *this);
 	buildBvh(rootBvh);
 }
@@ -187,11 +186,9 @@ void TriangleMesh::buildBvh(BoundingVolumeHierarchy* bvh) {
 	if (bvh->rangeEnd - bvh->rangeStart <= 4) { return; }
 	std::array<double, 3> extent = bvh->boundingBox.extent().getCoordinates();
 	long longestDirection = std::distance(extent.begin(), std::ranges::max_element(extent));
-	std::sort(triangles.begin() + bvh->rangeStart, triangles.begin() + bvh->rangeEnd, [longestDirection](const TriangleIndices& t1, const TriangleIndices& t2) { return t1.barycenter[longestDirection] < t2.barycenter[longestDirection]; });
-	long pivotIndex = (bvh->rangeStart + bvh->rangeEnd) / 2;
-	// double limit = (bvh->boundingBox.max[longestDirection] + bvh->boundingBox.min[longestDirection]) / 2;
-	// auto pivot = std::partition(triangles.begin() + bvh->rangeStart, triangles.begin() + bvh->rangeEnd, [longestDirection, limit](const TriangleIndices& triangle) { return triangle.barycenter[longestDirection] <= limit; });
-	// long pivotIndex = std::distance(triangles.begin(), pivot);
+	double limit = (bvh->boundingBox.max[longestDirection] + bvh->boundingBox.min[longestDirection]) / 2;
+	auto pivot = std::partition(triangles.begin() + bvh->rangeStart, triangles.begin() + bvh->rangeEnd, [longestDirection, limit](const TriangleIndices& triangle) { return triangle.barycenter[longestDirection] <= limit; });
+	long pivotIndex = std::distance(triangles.begin(), pivot);
 	if (pivotIndex == bvh->rangeStart || pivotIndex == bvh->rangeEnd) { return; }
 	auto* left = new BoundingVolumeHierarchy(bvh->rangeStart, pivotIndex, *this);
 	auto* right = new BoundingVolumeHierarchy(pivotIndex, bvh->rangeEnd, *this);
@@ -218,9 +215,9 @@ void TriangleMesh::rotate(double angleRad) {
 }
 
 Object::IntersectResult TriangleMesh::intersect(const Ray& ray) const {
+	if (!rootBvh->boundingBox.intersect(ray).result) { return {}; }
 	std::stack<const BoundingVolumeHierarchy*> stack;
 	IntersectResult bestIntersect {.impact = {}, .normal = {}, .distance = std::numeric_limits<double>::infinity(), .albedo = {}};
-	if (!rootBvh->boundingBox.intersect(ray).result) { return {}; }
 	stack.push(rootBvh);
 	BoundingBox::IntersectResult intersect;
 	while (!stack.empty()) {
