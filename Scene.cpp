@@ -64,6 +64,7 @@ Scene::IntersectResult Scene::intersect(const Ray& ray) const {
 	double minT = std::numeric_limits<double>::infinity();
 	Vector normal;
 	Vector impact;
+	Vector albedo;
 	const Object* hitObject = nullptr;
 	for (const Object* object: objects) {
 		Object::IntersectResult intersect = object->intersect(ray);
@@ -73,11 +74,12 @@ Scene::IntersectResult Scene::intersect(const Ray& ray) const {
 				normal = intersect.normal;
 				impact = intersect.impact;
 				minT = intersect.distance;
+				albedo = intersect.albedo;
 				hitObject = object;
 			}
 		}
 	}
-	return {impact, normal, hitObject, hasInter, minT};
+	return {.impact = impact, .normal = normal, .object = hitObject, .distance = minT, .albedo = albedo, .result = hasInter};
 }
 
 Vector Scene::getColor(const Ray& ray, int maxBounce, bool isIndirect) const {
@@ -105,22 +107,23 @@ Vector Scene::getColor(const Ray& ray, int maxBounce, bool isIndirect) const {
 		double px = std::max(1e-12, -lightDirection.dot(nPrime));
 		directContribution =
 			lightSource->lightPower / (4 * M_PI * M_PI) *
-			intersection.object->albedo *
+			intersection.albedo *
 			std::max(0., intersection.normal.dot(randomLightDirection)) / px *
 			std::max(0., nPrime.dot(-randomLightDirection)) / distance_2;
 	}
-	Vector indirectContribution = getColor(Ray(intersection.impact + EPSILON * intersection.normal, cosRandomVector(intersection.normal)), maxBounce - 1, true) * intersection.object->albedo;
+	Vector indirectContribution = getColor(Ray(intersection.impact + EPSILON * intersection.normal, cosRandomVector(intersection.normal)), maxBounce - 1, true) * intersection.albedo;
 	return indirectContribution + directContribution;
 }
 
-Vector Scene::getColor(const Vector& origin, const Vector& pixel, double focusDistance) const {
+Vector Scene::getColor(const Camera& camera, const Vector& pixel, double focusDistance) const {
 	Vector color;
 	for (int repeat = 0; repeat < RAYS_PER_PIXEL; repeat++) {
 		auto [dxPixel, dyPixel] = boxMuller(.5);
 		auto [dxCamera, dyCamera] = boxMuller(.5);
-		Vector u = (pixel + Vector(.5 + dxPixel, -.5 - dyPixel, 0) - origin).normalized();
-		Vector newOrigin = origin + Vector(dxCamera, dyCamera, 0);
-		Vector destination = origin + u / u.dot({0, 0, -1}) * focusDistance;
+		Vector u = (pixel + Vector(.5 + dxPixel, -.5 - dyPixel, 0) - camera.origin).normalized();
+		u = u[0] * camera.right + u[1] * camera.up + u[2] * camera.front;
+		Vector newOrigin = camera.origin + Vector(dxCamera, dyCamera, 0);
+		Vector destination = camera.origin + u / u.dot({0, 0, -1}) * focusDistance;
 		Vector newDirection = destination - newOrigin;
 		Ray ray(newOrigin, newDirection.normalized());
 		color += getColor(ray, MAX_BOUNCE);

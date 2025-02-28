@@ -10,7 +10,7 @@
 
 Sphere::Sphere(const Vector& center, double radius, const Vector& albedo): Object(albedo), center(center), radius(radius) {}
 
-Sphere::IntersectResult Sphere::intersect(const Ray& ray) const {
+Object::IntersectResult Sphere::intersect(const Ray& ray) const {
 	double a = 1;
 	double b = 2 * ray.direction.dot(ray.origin - center);
 	double c = (ray.origin - center).norm2() - radius * radius;
@@ -23,7 +23,14 @@ Sphere::IntersectResult Sphere::intersect(const Ray& ray) const {
 	double t = t1 > 0 ? t1 : t2;
 	Vector impact = ray.origin + t * ray.direction;
 	Vector normal = impact - center;
-	return {impact, normal.normalized(), t, true};
+	Vector albedo = this->albedo;
+	if (center[1] < -1000) {
+		double col = std::ceil((std::round((std::cos(impact[0]) + 1) / 2) + std::round((std::cos(impact[2]) + 1) / 2)) / 2);
+		col += std::ceil((std::round((std::cos(impact[0] + M_PI) + 1) / 2) + std::round((std::cos(impact[2] + M_PI) + 1) / 2)) / 2);
+		albedo = {col, col, col};
+		albedo = albedo * this->albedo;
+	}
+	return {.impact = impact, .normal = normal.normalized(), .distance = t, .albedo = albedo, .result = true};
 }
 
 Sphere& Sphere::mirror() {

@@ -10,6 +10,7 @@
 #include <stack>
 #include <string>
 
+#include "stb_image.h"
 
 TriangleMesh::TriangleMesh(const Vector& albedo): Object(albedo) {}
 
@@ -78,6 +79,16 @@ void TriangleMesh::readOBJ(const char* obj) {
 	computeTriangleBarycenters();
 }
 
+void TriangleMesh::loadTexture(const char* fileName) {
+	int width, height, channels;
+	uint8_t* textureData = stbi_load(fileName, &width, &height, &channels, STBI_rgb);
+	// std::cout << fileName << " " << width << " " << height << " " << channels << std::endl;
+	Texture texture {{}, width, height};
+	texture.data.reserve(width * height * 3);
+	std::transform(textureData, textureData + width * height * 3, std::back_inserter(texture.data), [](const uint8_t& x) { return std::pow(static_cast<double>(x) / 255, 2.2); });
+	textures.push_back(texture);
+}
+
 void TriangleMesh::computeTriangleBarycenters() {
 	for (TriangleIndices& triangle: triangles) {
 		triangle.barycenter = (vertices[triangle.vertexIndices[0]] + vertices[triangle.vertexIndices[1]] + vertices[triangle.vertexIndices[2]]) / 3;
@@ -127,6 +138,7 @@ Object::IntersectResult BoundingVolumeHierarchy::intersect(const Ray& ray) const
 	double bestT = std::numeric_limits<double>::infinity();
 	Vector bestNormal;
 	Vector bestImpact;
+	Vector bestAlbedo;
 	for (uint32_t index = rangeStart; index < rangeEnd; ++index) {
 		const TriangleIndices& triangle = mesh.triangles[index];
 		const Vector& a = mesh.vertices[triangle.vertexIndices[0]];
@@ -147,12 +159,22 @@ Object::IntersectResult BoundingVolumeHierarchy::intersect(const Ray& ray) const
 		double t = -ao.dot(normal) * invDet;
 		if (t < 0 || t > bestT) { continue; }
 		Vector correctedNormal = mesh.normals[triangle.normalIndices[0]] * alpha + mesh.normals[triangle.normalIndices[1]] * beta + mesh.normals[triangle.normalIndices[2]] * gamma;
+		if (!mesh.textures.empty()) {
+			Vector colorPosition = mesh.uvs[triangle.colorIndices[0]] * alpha + mesh.uvs[triangle.colorIndices[1]] * beta + mesh.uvs[triangle.colorIndices[2]] * gamma;
+			const TriangleMesh::Texture& texture = mesh.textures[triangle.group];
+			uint32_t colorU = std::fmod(colorPosition[0] + 1000, 1) * texture.width;
+			uint32_t colorV = (1 - std::fmod(colorPosition[1] + 1000, 1)) * texture.height;
+			uint32_t indexInTexture = 3 * (colorV * texture.width + colorU);
+			bestAlbedo = Vector(texture.data[indexInTexture], texture.data[indexInTexture + 1], texture.data[indexInTexture + 2]);
+		} else {
+			bestAlbedo = {};
+		}
 		hasInter = true;
 		bestT = t;
 		bestImpact = ray.origin + t * ray.direction;
 		bestNormal = correctedNormal;
 	}
-	return {bestImpact, bestNormal, bestT, hasInter};
+	return {.impact = bestImpact, .normal = bestNormal, .distance = bestT, .albedo = bestAlbedo, .result = hasInter};
 }
 
 void TriangleMesh::buildBvh() {
@@ -197,7 +219,7 @@ void TriangleMesh::rotate(double angleRad) {
 
 Object::IntersectResult TriangleMesh::intersect(const Ray& ray) const {
 	std::stack<const BoundingVolumeHierarchy*> stack;
-	IntersectResult bestIntersect {{}, {}, std::numeric_limits<double>::infinity()};
+	IntersectResult bestIntersect {.impact = {}, .normal = {}, .distance = std::numeric_limits<double>::infinity(), .albedo = {}};
 	if (!rootBvh->boundingBox.intersect(ray).result) { return {}; }
 	stack.push(rootBvh);
 	BoundingBox::IntersectResult intersect;

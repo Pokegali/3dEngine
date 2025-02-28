@@ -63,9 +63,16 @@ public:
 
 class TriangleMesh: public Object {
 public:
+	struct Texture {
+		std::vector<double> data;
+		int width;
+		int height;
+	};
+
 	explicit TriangleMesh(const Vector& albedo);
 
 	void readOBJ(const char* obj);
+	void loadTexture(const char* fileName);
 	void computeTriangleBarycenters();
 	void buildBvh();
 	void scaleTranslate(double scale, const Vector& translation);
@@ -77,6 +84,7 @@ public:
 	std::vector<Vector> normals;
 	std::vector<Vector> uvs;
 	std::vector<Vector> vertexColors;
+	std::vector<Texture> textures;
 	BoundingVolumeHierarchy* rootBvh = nullptr;
 
 private:

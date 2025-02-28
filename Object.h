@@ -13,6 +13,7 @@ public:
 		Vector impact;
 		Vector normal;
 		double distance = 0;
+		Vector albedo;
 		bool result = false;
 	};
 
