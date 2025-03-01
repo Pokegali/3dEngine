@@ -60,22 +60,38 @@ int main() {
 
 	for (const Sphere& sphere: spheres) { scene.addSphere(&sphere); }
 
-	auto* mesh = new TriangleMesh(Vector(.9, .05, .05));
-	mesh->readOBJ("../objects/Cobalion/Cobalion.obj");
-	mesh->loadTexture("../objects/Cobalion/Cobalion_Mouth.png");
-	mesh->loadTexture("../objects/Cobalion/Cobalion_BodyA.png");
-	mesh->loadTexture("../objects/Cobalion/Cobalion_BodyB.png");
-	mesh->loadTexture("../objects/Cobalion/Cobalion_Eye.png");
-	mesh->rotate(M_PI / 3);
-	mesh->scaleTranslate(3.5, Vector(0, -20, 0));
-	mesh->buildBvh();
-	scene.addMesh(mesh);
+	auto* cobalion = new TriangleMesh(Vector(.9, .05, .05));
+	cobalion->readOBJ("../objects/Cobalion/Cobalion.obj");
+	cobalion->loadTexture("../objects/Cobalion/Cobalion_Mouth.png");
+	cobalion->loadTexture("../objects/Cobalion/Cobalion_BodyA.png");
+	cobalion->loadTexture("../objects/Cobalion/Cobalion_BodyB.png");
+	cobalion->loadTexture("../objects/Cobalion/Cobalion_Eye.png");
+	cobalion->rotate(M_PI / 3, 1);
+	cobalion->scaleTranslate(4.5, Vector(0, -20, -7));
+	cobalion->buildBvh();
+	scene.addMesh(cobalion);
+
+	auto* diancie = new TriangleMesh(Vector(.9, .4, .4));
+	diancie->readOBJ("../objects/Diancie/Diancie.obj");
+	diancie->loadTexture("../objects/Diancie/Diancie_BodyA.png");
+	diancie->loadTexture("../objects/Diancie/Diancie_DiaEnv.png");
+	diancie->loadTexture("../objects/Diancie/Diancie_Mouth.png");
+	diancie->loadTexture("../objects/Diancie/Diancie_Eye.png");
+	diancie->loadTexture("../objects/Diancie/Diancie_BodyB.png");
+	diancie->loadTexture("../objects/Diancie/Diancie_DesukarnEnv.png");
+	diancie->rotate(3 * M_PI / 2, 0);
+	diancie->rotate(7 * M_PI / 6, 1);
+	diancie->scaleTranslate(0.2, Vector(22, -15, 10));
+	diancie->buildBvh();
+	scene.addMesh(diancie);
+
 
 	auto* image = new unsigned char[WIDTH * HEIGHT * 3];
 	drawScene(scene, camera, image);
 	stbi_write_png("image.png", WIDTH, HEIGHT, 3, image, 0);
 
-	delete mesh;
+	delete cobalion;
+	delete diancie;
 	delete[] image;
 
 	return 0;
