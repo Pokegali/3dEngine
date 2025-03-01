@@ -211,26 +211,8 @@ void TriangleMesh::scaleTranslate(double scale, const Vector& translation) {
 }
 
 void TriangleMesh::rotate(double angleRad, uint32_t axis) {
-	double cos = std::cos(angleRad);
-	double sin = std::sin(angleRad);
 	for (Vector& vertex: vertices) {
-		auto [vx, vy, vz] = vertex.getCoordinates();
-		switch (axis) {
-			case 0:
-				vertex[1] = vy * cos + vz * -sin;
-				vertex[2] = vy * sin + vz * cos;
-				break;
-			case 1:
-				vertex[0] = vx * cos + vz * sin;
-				vertex[2] = vx * -sin + vz * cos;
-				break;
-			case 2:
-				vertex[0] = vx * cos + vy * -sin;
-				vertex[2] = vx * sin + vy * cos;
-				break;
-			default:
-				throw std::runtime_error("Axis must be 0 (x), 1 (y), or 2 (z).");
-		}
+		vertex.rotate(angleRad, axis);
 	}
 }
 

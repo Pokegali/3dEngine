@@ -3,7 +3,9 @@
 //
 
 #include "Vector.h"
+
 #include <cmath>
+#include <stdexcept>
 
 static double square(double x) { return x * x; }
 
@@ -24,6 +26,28 @@ Vector& Vector::operator+=(const Vector& v) {
 Vector& Vector::operator/=(double x) {
 	*this = *this / x;
 	return *this;
+}
+
+void Vector::rotate(double angleRad, uint32_t axis) {
+	double cos = std::cos(angleRad);
+	double sin = std::sin(angleRad);
+	auto [vx, vy, vz] = this->coord;
+	switch (axis) {
+		case 0:
+			coord[1] = vy * cos + vz * -sin;
+			coord[2] = vy * sin + vz * cos;
+			break;
+		case 1:
+			coord[0] = vx * cos + vz * sin;
+			coord[2] = vx * -sin + vz * cos;
+			break;
+		case 2:
+			coord[0] = vx * cos + vy * -sin;
+			coord[2] = vx * sin + vy * cos;
+			break;
+		default:
+			throw std::runtime_error("Axis must be 0 (x), 1 (y), or 2 (z).");
+	}
 }
 
 double Vector::norm2() const {

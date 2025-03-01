@@ -8,11 +8,9 @@
 #include <random>
 #include <vector>
 
+#include "Config.h"
 #include "Sphere.h"
 #include "TriangleMesh.h"
-
-constexpr int RAYS_PER_PIXEL = 128;
-constexpr int MAX_BOUNCE = 5;
 
 static std::array<std::default_random_engine, 4> engines;
 static std::uniform_real_distribution<> uniform(0, 1);
@@ -22,6 +20,8 @@ struct Camera {
 	Vector front;
 	Vector up;
 	Vector right = front.cross(up);
+
+	void rotate(double angleRad, uint32_t axis);
 };
 
 class Scene {
@@ -40,7 +40,7 @@ public:
 	void addMesh(const TriangleMesh*);
 	[[nodiscard]] IntersectResult intersect(const Ray& ray) const;
 	[[nodiscard]] Vector getColor(const Ray& ray, int maxBounce, bool isIndirect = false) const;
-	[[nodiscard]] Vector getColor(const Camera& camera, const Vector& pixel, double focusDistance) const;
+	[[nodiscard]] Vector getColor(const Camera& camera, const Vector& pixel, const Config& config) const;
 
 	std::vector<const Object*> objects;
 	const Sphere* lightSource = nullptr;

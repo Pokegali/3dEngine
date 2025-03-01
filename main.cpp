@@ -7,11 +7,7 @@
 #include "Sphere.h"
 #include "Vector.h"
 #include "ProgressBar.h"
-
-
-constexpr double ALPHA = 60 * M_PI / 180;
-constexpr int HEIGHT = 512;
-constexpr int WIDTH = 512;
+#include "Config.h"
 
 uint8_t adjustColor(double color) {
 	return static_cast<uint8_t>(std::min(255., std::pow(color, 1 / 2.2)));
@@ -19,32 +15,36 @@ uint8_t adjustColor(double color) {
 
 constexpr auto get_clock = std::chrono::high_resolution_clock::now;
 
-void drawScene(const Scene& scene, const Camera& camera, uint8_t* buffer) {
+void drawScene(const Scene& scene, const Camera& camera, const Config& config, uint8_t* buffer) {
 	using std::chrono_literals::operator ""ns;
 	long pixelTime = 0;
 	auto startTime = get_clock();
-	ProgressBar progressBar(HEIGHT * WIDTH);
-#pragma omp parallel for default(none) schedule(dynamic) shared(scene, camera, buffer, pixelTime, progressBar)
-	for (int i = 0; i < HEIGHT; i++) {
+	ProgressBar progressBar(config.height * config.width);
+#pragma omp parallel for default(none) schedule(dynamic) shared(scene, camera, config, buffer, pixelTime, progressBar)
+	for (int i = 0; i < config.height; i++) {
 		auto lineStartTime = get_clock();
-		for (int j = 0; j < WIDTH; j++) {
-			Vector pixel(j - static_cast<double>(WIDTH) / 2, -i + static_cast<double>(HEIGHT) / 2, HEIGHT / (2 * tan(ALPHA / 2)));
-			Vector color = scene.getColor(camera, pixel, 55);
-			buffer[(i * WIDTH + j) * 3 + 0] = adjustColor(color[0]);
-			buffer[(i * WIDTH + j) * 3 + 1] = adjustColor(color[1]);
-			buffer[(i * WIDTH + j) * 3 + 2] = adjustColor(color[2]);
+		for (int j = 0; j < config.width; j++) {
+			Vector pixel(j - static_cast<double>(config.width) / 2, -i + static_cast<double>(config.height) / 2, config.height / (2 * tan(config.alpha / 2)));
+			Vector color = scene.getColor(camera, pixel, config);
+			buffer[(i * config.width + j) * 3 + 0] = adjustColor(color[0]);
+			buffer[(i * config.width + j) * 3 + 1] = adjustColor(color[1]);
+			buffer[(i * config.width + j) * 3 + 2] = adjustColor(color[2]);
 			++progressBar;
 		}
 		pixelTime += (get_clock() - lineStartTime) / 1ns;
 	}
-	pixelTime /= HEIGHT * WIDTH;
+	pixelTime /= config.height * config.width;
 	long totalTime = (get_clock() - startTime) / 1ns;
-	std::cout << std::format("\nTemps moyen pour un rayon: {:.2f}µs (Total {:.1f}s)", static_cast<double>(pixelTime) / RAYS_PER_PIXEL / 1000, static_cast<double>(totalTime) / 1e9) << std::endl;
+	std::cout << std::format("\nTemps moyen pour un rayon: {:.2f}µs (Total {:.1f}s)", static_cast<double>(pixelTime) / config.raysPerPixel / 1000, static_cast<double>(totalTime) / 1e9) << std::endl;
 }
 
 int main() {
-	double angle = -10 * M_PI / 180;
-	Camera camera({0, 10, 55}, {0, std::sin(angle), -std::cos(angle)}, {0, std::cos(angle), std::sin(angle)});
+	Config config {};
+	readConfig("../params.cfg", config);
+
+	Camera camera({-10, 10, 55}, {0, 0, -1}, {0, 1, 0});
+	camera.rotate(-10 * M_PI / 180, 0);
+	camera.rotate(-20 * M_PI / 180, 1);
 	Scene scene;
 
 	const Sphere spheres[] = {
@@ -86,9 +86,9 @@ int main() {
 	scene.addMesh(diancie);
 
 
-	auto* image = new unsigned char[WIDTH * HEIGHT * 3];
-	drawScene(scene, camera, image);
-	stbi_write_png("image.png", WIDTH, HEIGHT, 3, image, 0);
+	auto* image = new unsigned char[config.width * config.height * 3];
+	drawScene(scene, camera, config, image);
+	stbi_write_png("image.png", config.width, config.height, 3, image, 0);
 
 	delete cobalion;
 	delete diancie;

@@ -22,6 +22,8 @@ public:
 	Vector& operator+=(const Vector& v);
 	Vector& operator/=(double);
 
+	void rotate(double angleRad, uint32_t axis);
+
 	[[nodiscard]] double norm2() const;
 	[[nodiscard]] double dot(const Vector&) const;
 	[[nodiscard]] Vector cross(const Vector&) const;

@@ -9,6 +9,8 @@
 #include <iostream>
 #include <omp.h>
 
+#include "Config.h"
+
 constexpr double EPSILON = 1e-6;
 
 double getRandomUniform() {
@@ -41,6 +43,12 @@ Vector cosRandomVector(const Vector& normal) {
 	}
 	Vector tangent2 = normal.cross(tangent).normalized();
 	return direction[2] * normal + direction[0] * tangent + direction[1] * tangent2;
+}
+
+void Camera::rotate(double angleRad, uint32_t axis) {
+	front.rotate(angleRad, axis);
+	up.rotate(angleRad, axis);
+	right.rotate(angleRad, axis);
 }
 
 Scene::Scene() {
@@ -115,20 +123,20 @@ Vector Scene::getColor(const Ray& ray, int maxBounce, bool isIndirect) const {
 	return indirectContribution + directContribution;
 }
 
-Vector Scene::getColor(const Camera& camera, const Vector& pixel, double focusDistance) const {
+Vector Scene::getColor(const Camera& camera, const Vector& pixel, const Config& config) const {
 	Vector color;
-	for (int repeat = 0; repeat < RAYS_PER_PIXEL; repeat++) {
+	for (int repeat = 0; repeat < config.raysPerPixel; repeat++) {
 		auto [dxPixel, dyPixel] = boxMuller(.5);
 		auto [dxCamera, dyCamera] = boxMuller(.5);
 		Vector u = (pixel + Vector(.5 + dxPixel, -.5 - dyPixel, 0) - camera.origin).normalized();
 		u = u[0] * camera.right + u[1] * camera.up + u[2] * camera.front;
 		Vector newOrigin = camera.origin + Vector(dxCamera, dyCamera, 0);
-		Vector destination = camera.origin + u / u.dot(camera.front) * focusDistance;
+		Vector destination = camera.origin + u / u.dot(camera.front) * config.focusDistance;
 		Vector newDirection = destination - newOrigin;
 		Ray ray(newOrigin, newDirection.normalized());
-		color += getColor(ray, MAX_BOUNCE);
+		color += getColor(ray, config.maxBounce);
 	}
-	return color / RAYS_PER_PIXEL;
+	return color / config.raysPerPixel;
 }
 
 Vector Scene::bounceIntersection(const Ray& ray, const IntersectResult& intersection, int maxBounce) const {
