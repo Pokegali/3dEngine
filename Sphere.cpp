@@ -9,6 +9,7 @@
 #include "Ray.h"
 
 Sphere::Sphere(const Vector& center, double radius, const Vector& albedo): Object(albedo), center(center), radius(radius) {}
+Sphere::Sphere(const Vector& center, double radius, const AlbedoFunction& albedo): Object(albedo), center(center), radius(radius) {}
 
 Object::IntersectResult Sphere::intersect(const Ray& ray) const {
 	double a = 1;
@@ -23,13 +24,7 @@ Object::IntersectResult Sphere::intersect(const Ray& ray) const {
 	double t = t1 > 0 ? t1 : t2;
 	Vector impact = ray.origin + t * ray.direction;
 	Vector normal = impact - center;
-	Vector albedo = this->albedo;
-	if (center[1] < -1000) {
-		double col = std::ceil((std::round((std::cos(impact[0]) + 1) / 2) + std::round((std::cos(impact[2]) + 1) / 2)) / 2);
-		col += std::ceil((std::round((std::cos(impact[0] + M_PI) + 1) / 2) + std::round((std::cos(impact[2] + M_PI) + 1) / 2)) / 2);
-		albedo = {col, col, col};
-		albedo = albedo * this->albedo;
-	}
+	Vector albedo = hasVariableAlbedo ? albedoFunction(impact) : this->albedo;
 	return {.impact = impact, .normal = normal.normalized(), .distance = t, .albedo = albedo, .result = true};
 }
 

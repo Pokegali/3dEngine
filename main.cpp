@@ -50,12 +50,14 @@ int main() {
 	const Sphere spheres[] = {
 		Sphere(Vector(20, 20, 40), 5, Vector()).light(2e10),
 		Sphere(Vector(15, -18, 3), 2, Vector(.5, .2, .9)),
-		Sphere(Vector(0, -10020, 0), 10000, .2 * Vector(1, 1, 1)),
-		Sphere(Vector(0, +10040, 0), 10000, .2 * Vector(1, 1, 1)),
-		Sphere(Vector(-10040, 0, 0), 10000, .2 * Vector(1, 1, 1)),
-		Sphere(Vector(+10040, 0, 0), 10000, .2 * Vector(1, 1, 1)),
-		Sphere(Vector(0, 0, -10030), 10000, .2 * Vector(1, 1, 1)),
-		Sphere(Vector(0, 0, +10070), 10000, .2 * Vector(1, 1, 1))
+		Sphere(Vector(10, -17, 15), 3, Vector()).transparent(1.5),
+		Sphere(Vector(-30, -17.5, -20), 2.5, Vector()).mirror(),
+		Sphere(Vector(0, -10020, 0), 10000, AlbedoFunctions::checkerboard(1, 3, .2 * vec111, .1 * vec111)),
+		Sphere(Vector(0, +10040, 0), 10000, .2 * vec111),
+		Sphere(Vector(-10040, 0, 0), 10000, .2 * vec111),
+		Sphere(Vector(+10040, 0, 0), 10000, .2 * vec111),
+		Sphere(Vector(0, 0, -10030), 10000, .2 * vec111),
+		Sphere(Vector(0, 0, +10070), 10000, .2 * vec111)
 	};
 
 	for (const Sphere& sphere: spheres) { scene.addSphere(&sphere); }

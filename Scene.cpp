@@ -109,9 +109,7 @@ Vector Scene::getColor(const Ray& ray, int maxBounce, bool isIndirect) const {
 	Ray shadowRay(intersection.impact + intersection.normal * EPSILON / 10, randomLightDirection);
 	IntersectResult shadowIntersect = intersect(shadowRay);
 	Vector directContribution;
-	if (shadowIntersect.result && shadowIntersect.distance * shadowIntersect.distance < distance_2 - 100 * EPSILON) {
-		directContribution = Vector(0, 0, 0);
-	} else {
+	if (!shadowIntersect.result || shadowIntersect.distance * shadowIntersect.distance > distance_2 - 100 * EPSILON) {
 		double px = std::max(1e-12, -lightDirection.dot(nPrime));
 		directContribution =
 			lightSource->lightPower / (4 * M_PI * M_PI) *

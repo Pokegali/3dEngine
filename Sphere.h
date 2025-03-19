@@ -13,6 +13,7 @@
 class Sphere: public Object {
 public:
 	Sphere(const Vector& center, double radius, const Vector& albedo);
+	Sphere(const Vector& center, double radius, const AlbedoFunction& albedo);
 	[[nodiscard]] IntersectResult intersect(const Ray& ray) const override;
 
 	Sphere& mirror();

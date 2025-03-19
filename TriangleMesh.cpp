@@ -122,7 +122,7 @@ BoundingVolumeHierarchy::~BoundingVolumeHierarchy() {
 }
 
 void BoundingVolumeHierarchy::buildBoundingBox() {
-	Vector min = std::numeric_limits<double>::infinity() * Vector(1, 1, 1);
+	Vector min = std::numeric_limits<double>::infinity() * vec111;
 	Vector max = -min;
 	for (uint32_t triangle = rangeStart; triangle < rangeEnd; triangle++) {
 		for (const uint32_t& vertex: mesh.triangles[triangle].vertexIndices) {

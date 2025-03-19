@@ -43,5 +43,6 @@ private:
 
 Vector operator*(double, const Vector&);
 
+#define vec111 Vector(1, 1, 1)
 
 #endif //VECTOR_H
